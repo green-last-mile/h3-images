@@ -37,7 +37,7 @@ class Tile:
         self.lat_min, self.lat_max = self.lat_range
         self.lon_min, self.lon_max = self.lon_range
 
-        # self.mapbox_key 
+        # self.mapbox_key
 
     def _stringify(self):
         """
@@ -71,11 +71,7 @@ class Hex:
 
         self.utm_poly: Polygon = self._transform_to_utm()
 
-    def build_tile(
-        self,
-        style: str,
-        size: int
-    ) -> Tile:
+    def build_tile(self, style: str, size: int) -> Tile:
         """
         Build a tile from the hexagon
         """
@@ -171,7 +167,7 @@ def mask_image(
     """
     mask = np.zeros(img_array.shape[:2], dtype=np.uint8)
     points = np.array(polygon.exterior.coords, dtype=np.int32)
-    
+
     # this modifies the mask in place
     mask = cv2.drawContours(mask, [points], -1, (255, 255, 255), -1, cv2.LINE_AA)
 
@@ -189,13 +185,12 @@ def mask_image(
 @click.option("--style", default="satellite-v9", help="The mapbox style")
 @click.option("--tile-res", default=512, help="The resolution of the tile (square)")
 def main(h3: str, output: str, style: str, tile_res: int) -> None:
-    
     # if output is a directory, then we need to create a filename (just use the h3 index
     # for now)
     output = Path(output)
     if output.is_dir():
         output = output / f"{h3}.png"
-    
+
     hex_ = Hex(h3=h3)
 
     tile = hex_.build_tile(style=style, size=tile_res)
