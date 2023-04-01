@@ -179,17 +179,30 @@ def mask_image(
     return res
 
 
-@click.command()
-@click.option("--h3", required=True, help="The h3 index")
-@click.option("--output", required=True, help="The output file")
-@click.option("--style", default="satellite-v9", help="The mapbox style")
-@click.option("--tile-res", default=512, help="The resolution of the tile (square)")
-def main(h3: str, output: str, style: str, tile_res: int) -> None:
+def run(
+    h3: str,
+    style: str = "satellite-v9",
+    tile_res: int = 512,
+    return_image: bool = False,
+    output: str = None,
+):
+    hex_ = Hex(h3=h3)
+
+    tile = hex_.build_tile(style=style, size=tile_res)
+
+    img = tile.fetch_image()
+    img_array = np.array(img)
+
+    polygon = hex_.get_image_frame_polygon(img_array.shape[:2])
+
+    masked_img = mask_image(img_array, polygon)
+
     # if output is a directory, then we need to create a filename (just use the h3 index
     # for now)
-    output = Path(output)
-    if output.is_dir():
-        output = output / f"{h3}.png"
+    if output:
+        output = Path(output)
+        if output.is_dir():
+            output = output / f"{h3}.png"
 
     hex_ = Hex(h3=h3)
 
@@ -202,7 +215,23 @@ def main(h3: str, output: str, style: str, tile_res: int) -> None:
 
     res = mask_image(img_array, polygon)
 
-    cv2.imwrite(str(output), res)
+    if output:
+        cv2.imwrite(str(output), res)
+
+    if return_image:
+        # show the image with ma
+        return Image.fromarray(res)
+        
+
+
+@click.command()
+@click.option("--h3", required=True, help="The h3 index")
+@click.option("--output", required=True, help="The output file")
+@click.option("--style", default="satellite-v9", help="The mapbox style")
+@click.option("--tile-res", default=512, help="The resolution of the tile (square)")
+def main(h3: str, output: str, style: str, tile_res: int) -> None:
+    run(h3, style, tile_res, output=output)
+    
 
 
 if __name__ == "__main__":
