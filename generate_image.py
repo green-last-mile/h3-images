@@ -67,7 +67,7 @@ class Hex:
     h3: str
 
     def __post_init__(self):
-        self.poly: Polygon = Polygon(h3.h3_to_geo_boundary(self.h3))
+        self.poly: Polygon = Polygon(h3.cell_to_boundary(self.h3))
 
         self.utm_poly: Polygon = self._transform_to_utm()
 
