@@ -3,3 +3,5 @@ numpy
 requests
 click
 pyproj
+opencv-python
+h3
