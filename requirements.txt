@@ -4,4 +4,4 @@ requests
 click
 pyproj
 opencv-python
-h3
+h3>=3.7.6
