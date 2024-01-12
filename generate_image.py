@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 from typing import Tuple
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import click
 import requests
 from io import BytesIO
@@ -11,6 +11,7 @@ import cv2
 import h3
 from shapely.geometry import Polygon
 from shapely.ops import transform
+
 
 @dataclass
 class Tile:
@@ -33,14 +34,13 @@ class Tile:
         url = f"https://api.mapbox.com/styles/v1/mapbox/{self.mapbox_style}/static/[{self._stringify()}]/{self.image_height}x{self.image_width}?access_token={os.environ.get('MAPBOX_KEY')}"
         response = requests.get(url)
 
-
         if response.status_code != 200:
             print(f"Error fetching image: {response.content}")  # Error information
             return None
 
         try:
             return Image.open(BytesIO(response.content)).convert("RGB")
-        except PIL.UnidentifiedImageError as e:
+        except UnidentifiedImageError as e:
             print(f"Error in image decoding: {e}")
             return None
 
@@ -61,7 +61,7 @@ class Hex:
             image_height=size,
             image_width=size,
         )
-    
+
     def get_image_frame_polygon(self, img_size: Tuple[int, int]) -> Polygon:
         """
         Transforms the polygon to the image frame coordinates.
@@ -75,8 +75,9 @@ class Hex:
                 int(((x - min_x) / polygon_width) * img_size[0]),
                 int(((y - min_y) / polygon_height) * img_size[1]),
             ),
-            self.poly
+            self.poly,
         )
+
 
 def mask_image(img_array: np.array, polygon: Polygon):
     mask = np.zeros(img_array.shape[:2], dtype=np.uint8)
@@ -89,7 +90,9 @@ def mask_image(img_array: np.array, polygon: Polygon):
     return res
 
 
-def run(h3_index: str, style: str = "satellite-v9", tile_res: int = 512, output: str = None):
+def run(
+    h3_index: str, style: str = "satellite-v9", tile_res: int = 512, output: str = None
+):
     hex_ = Hex(h3=h3_index)
     tile = hex_.build_tile(style, tile_res)
     img = tile.fetch_image()
@@ -112,6 +115,7 @@ def run(h3_index: str, style: str = "satellite-v9", tile_res: int = 512, output:
 @click.option("--tile-res", default=512, help="The resolution of the tile (square)")
 def main(h3: str, output: str, style: str, tile_res: int):
     run(h3, style, tile_res, output)
+
 
 if __name__ == "__main__":
     main()
