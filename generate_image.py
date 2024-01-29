@@ -105,7 +105,9 @@ def run(
             output_path = Path(output)
             if output_path.is_dir():
                 output_path = output_path / f"{h3_index}.png"
-            cv2.imwrite(str(output_path), masked_img)
+            cv2.imwrite(str(output_path), cv2.cvtColor(masked_img, cv2.COLOR_RGB2BGR))
+        else:
+            return masked_img
 
 
 @click.command()
